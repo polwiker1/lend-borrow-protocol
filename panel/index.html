@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lending Tango Parana</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="intro">
+        <div>
+          <p class="eyebrow">Caso de estudio agrofinanciero</p>
+          <h1>Lending Tango Parana</h1>
+          <p class="summary">
+            Simulador simple de credito colateralizado con trigo tokenizado. La cooperativa deja wTK
+            como garantia, Molinos aporta liquidez estable y el protocolo calcula deuda, riesgo,
+            intereses, reserva y posible liquidacion.
+          </p>
+        </div>
+        <div class="status-box">
+          <span class="status-label">Estado del prestamo</span>
+          <strong id="estadoPrestamo">Saludable</strong>
+          <small id="estadoDetalle">La posicion mantiene margen suficiente.</small>
+        </div>
+      </section>
+
+      <section class="grid">
+        <form class="panel inputs" id="simulador">
+          <div class="section-title">
+            <h2>Datos de la operacion</h2>
+            <p>Carga textual para explicar quien presta, quien toma y que activo respalda el credito.</p>
+          </div>
+
+          <div class="model-switch">
+            <span>Tipo de modelo</span>
+            <label>
+              <input type="radio" name="modelType" value="productivo" checked />
+              Financiamiento productivo
+            </label>
+            <label>
+              <input type="radio" name="modelType" value="exposicion" />
+              Exposicion a trigo tokenizado
+            </label>
+          </div>
+
+          <label>
+            Quien presta liquidez
+            <input id="lender" type="text" value="Molinos Rio Parana" />
+          </label>
+
+          <label>
+            Quien toma el prestamo
+            <input id="borrower" type="text" value="Cooperativa AFRA - Asociacion Federada de Recolectores Argentinos" />
+          </label>
+
+          <div class="two-cols">
+            <label>
+              Token colateral
+              <input id="collateralToken" type="text" value="wTK - trigo tokenizado" />
+            </label>
+            <label>
+              Token prestado
+              <input id="borrowToken" type="text" value="aUSD - liquidez estable" />
+            </label>
+          </div>
+
+          <div class="two-cols">
+            <label>
+              <span id="wheatAmountLabel">Trigo en garantia (bushels / wTK)</span>
+              <input id="wheatAmount" type="number" min="0" step="100" value="10000" />
+            </label>
+            <label>
+              Precio trigo actual (USD/bushel)
+              <input id="currentPrice" type="number" min="0" step="0.001" value="5.901" />
+            </label>
+          </div>
+
+          <div class="two-cols">
+            <label>
+              Precio esperado a diciembre
+              <input id="decemberPrice" type="number" min="0" step="0.001" value="6.12" />
+            </label>
+            <label>
+              Precio esperado a marzo
+              <input id="marchPrice" type="number" min="0" step="0.001" value="6.32" />
+            </label>
+          </div>
+
+          <div class="two-cols">
+            <label>
+              <span id="borrowAmountLabel">Prestamo solicitado (aUSD)</span>
+              <input id="borrowAmount" type="number" min="0" step="100" value="40000" />
+            </label>
+            <label>
+              Plazo estimado (meses)
+              <input id="termMonths" type="number" min="1" step="1" value="9" />
+            </label>
+          </div>
+
+          <div class="three-cols">
+            <label>
+              Factor colateral (%)
+              <input id="collateralFactor" type="number" min="0" max="100" step="1" value="75" />
+            </label>
+            <label>
+              Umbral liquidacion (%)
+              <input id="liquidationThreshold" type="number" min="0" max="100" step="1" value="80" />
+            </label>
+            <label>
+              Tasa anual (%)
+              <input id="borrowRate" type="number" min="0" step="0.1" value="5" />
+            </label>
+          </div>
+
+          <div class="two-cols">
+            <label>
+              Reserva protocolo (% del interes)
+              <input id="reserveFactor" type="number" min="0" max="100" step="1" value="10" />
+            </label>
+            <label>
+              Bonus liquidador (%)
+              <input id="liquidationBonus" type="number" min="0" max="100" step="1" value="5" />
+            </label>
+          </div>
+        </form>
+
+        <section class="panel results">
+          <div class="section-title">
+            <h2>Salida tipo planilla</h2>
+            <p>Numeros principales para explicar el credito antes de llevarlo a contrato.</p>
+          </div>
+
+          <div class="metrics">
+            <div>
+              <span>Valor del trigo en garantia</span>
+              <strong id="collateralValue">$0</strong>
+            </div>
+            <div>
+              <span>Maximo prestable</span>
+              <strong id="maxBorrow">$0</strong>
+            </div>
+            <div>
+              <span>Deuda estimada al vencimiento</span>
+              <strong id="finalDebt">$0</strong>
+            </div>
+            <div>
+              <span>Health factor actual</span>
+              <strong id="healthFactor">0.00</strong>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Escenario</th>
+                  <th>Precio trigo</th>
+                  <th>Valor garantia</th>
+                  <th>Health factor</th>
+                  <th>Lectura</th>
+                </tr>
+              </thead>
+              <tbody id="scenarioRows"></tbody>
+            </table>
+          </div>
+
+          <div class="risk-callout" id="riskCallout">
+            <strong>Riesgo de liquidacion</strong>
+            <p id="liquidationText"></p>
+          </div>
+
+          <div class="split">
+            <div>
+              <span>Interes total</span>
+              <strong id="totalInterest">$0</strong>
+            </div>
+            <div>
+              <span>Gana lender</span>
+              <strong id="lenderYield">$0</strong>
+            </div>
+            <div>
+              <span>Reserva protocolo</span>
+              <strong id="protocolReserve">$0</strong>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="panel legal">
+        <div class="section-title">
+          <h2>Marco legal y auditoria visible</h2>
+          <p>Bloque no implementado en smart contracts. Queda expuesto para mostrar camino de adopcion real.</p>
+        </div>
+        <div class="legal-grid">
+          <div>
+            <strong>Contrato legal</strong>
+            <p>Acuerdo marco entre lender, borrower, custodio de grano y protocolo.</p>
+          </div>
+          <div>
+            <strong>ARCA</strong>
+            <p>Registro fiscal, trazabilidad documental y reportes impositivos de la operatoria.</p>
+          </div>
+          <div>
+            <strong>Auditoria de la Nacion Argentina</strong>
+            <p>Auditoria externa del esquema, reservas, reportes y custodia documental.</p>
+          </div>
+          <div>
+            <strong>Custodia y calidad</strong>
+            <p>Certificacion de silo, calidad de trigo, seguros y documentos respaldatorios del wTK.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
