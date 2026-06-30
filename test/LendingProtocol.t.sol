@@ -55,6 +55,26 @@ contract LendingProtocolTest is Test {
         assertTrue(protocol.isHealthy(borrower));
     }
 
+    function testRejectsLiquidationPenaltyBelowFivePercent() public {
+        MockToken token = new MockToken("Low Bonus", "LOW", 18, 0, address(this));
+        oracle.setPrice(address(token), 1e8);
+
+        vm.expectRevert(bytes("Bad liquidation penalty"));
+        protocol.addMarket(address(token), 7_500, 8_000, 499, 500, 1_000);
+    }
+
+    function testRejectsLiquidationPenaltyAboveTenPercent() public {
+        vm.expectRevert(bytes("Bad liquidation penalty"));
+        protocol.updateMarket(address(ethToken), 7_500, 8_000, 1_001, 500, 1_000);
+    }
+
+    function testAllowsLiquidationPenaltyBetweenFiveAndTenPercent() public {
+        protocol.updateMarket(address(ethToken), 7_500, 8_000, 750, 500, 1_000);
+
+        (,,,, uint256 liquidationPenalty,,,,) = protocol.markets(address(ethToken));
+        assertEq(liquidationPenalty, 750);
+    }
+
     function testDebtAccruesSimpleInterest() public {
         vm.startPrank(lender);
         usdToken.approve(address(protocol), 10_000 * WAD);
@@ -200,7 +220,9 @@ contract LendingProtocolTest is Test {
         uint256 expectedMaxWTK = (expectedBorrowLimitUsd * 1e8) / 590_100_000;
 
         assertEq(protocol.getBorrowLimitUsd(asociacionTransportistasCamionesLtd), expectedBorrowLimitUsd);
-        assertEq(protocol.getMaxBorrowableTokenAmount(asociacionTransportistasCamionesLtd, address(wTK)), expectedMaxWTK);
+        assertEq(
+            protocol.getMaxBorrowableTokenAmount(asociacionTransportistasCamionesLtd, address(wTK)), expectedMaxWTK
+        );
 
         uint256 requestedWTK = 10_000 * WAD;
 

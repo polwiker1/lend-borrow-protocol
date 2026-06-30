@@ -118,6 +118,12 @@ label,
   margin-bottom: 18px;
 }
 
+.section-title.compact {
+  margin: 20px 0 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
 .section-title p {
   margin-bottom: 0;
   color: var(--muted);
@@ -131,7 +137,7 @@ label {
 
 .model-switch {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 16px;
 }
@@ -160,7 +166,8 @@ label {
   margin: 0;
 }
 
-input {
+input,
+select {
   width: 100%;
   margin-top: 6px;
   border: 1px solid var(--line);
@@ -171,7 +178,8 @@ input {
   padding: 10px 11px;
 }
 
-input:focus {
+input:focus,
+select:focus {
   border-color: var(--accent);
   outline: 2px solid rgba(22, 114, 79, 0.15);
 }
@@ -198,6 +206,7 @@ input:focus {
 }
 
 .metrics div,
+.oracle-grid div,
 .split div,
 .legal-grid div {
   border: 1px solid var(--line);
@@ -207,10 +216,32 @@ input:focus {
 }
 
 .metrics strong,
+.oracle-grid strong,
 .split strong {
   display: block;
   margin-top: 8px;
   font-size: 24px;
+}
+
+.oracle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.oracle-grid span,
+.oracle-grid small {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.oracle-grid small {
+  display: block;
+  margin-top: 6px;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .table-wrap {
@@ -263,6 +294,133 @@ th {
   line-height: 1.45;
 }
 
+.admin-note {
+  border: 1px solid #bdd7ca;
+  border-radius: 8px;
+  background: #eef8f2;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.admin-note p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.admin-actions {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.admin-actions button {
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 10px;
+}
+
+.admin-actions button:disabled {
+  border-color: var(--line);
+  background: #e4ded0;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.flow-box {
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 14px;
+}
+
+.flow-box p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.risk-lesson {
+  margin-top: 16px;
+  border: 1px solid #d7c498;
+  border-radius: 8px;
+  background: #fff8e8;
+  padding: 14px;
+}
+
+.risk-lesson p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.ticket-card {
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 14px;
+}
+
+.ticket-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+}
+
+.ticket-head span,
+.ticket-grid span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ticket-head strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--accent);
+  font-size: 24px;
+}
+
+.ticket-head small {
+  align-self: flex-start;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-weight: 800;
+  padding: 7px 10px;
+}
+
+.ticket-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ticket-grid strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+
+.ticket-card p {
+  margin: 12px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 .split,
 .legal-grid {
   display: grid;
@@ -284,10 +442,57 @@ th {
   line-height: 1.45;
 }
 
+.source-footer {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 16px;
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+  padding: 18px 0 0;
+}
+
+.source-footer p,
+.source-footer small {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.source-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+}
+
+.source-footer a {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 11px;
+  text-decoration: none;
+}
+
+.source-footer a:hover {
+  border-color: var(--accent);
+}
+
+.source-footer small {
+  grid-column: 1 / -1;
+  font-size: 12px;
+}
+
 @media (max-width: 920px) {
   .intro,
   .grid,
   .split,
+  .oracle-grid,
+  .ticket-grid,
+  .admin-actions,
+  .source-footer,
   .legal-grid {
     grid-template-columns: 1fr;
   }
@@ -297,6 +502,7 @@ th {
   .two-cols,
   .three-cols,
   .metrics,
+  .ticket-head,
   .model-switch {
     grid-template-columns: 1fr;
   }

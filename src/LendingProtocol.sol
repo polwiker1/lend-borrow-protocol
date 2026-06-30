@@ -26,6 +26,8 @@ contract LendingProtocol is Ownable, Pausable, ReentrancyGuard {
     uint256 public constant BASIS_POINTS = 10_000;
     uint256 public constant PRICE_DECIMALS = 1e8;
     uint256 public constant YEAR = 365 days;
+    uint256 public constant MIN_LIQUIDATION_PENALTY = 500;
+    uint256 public constant MAX_LIQUIDATION_PENALTY = 1_000;
 
     struct Market {
         IERC20 token;
@@ -111,6 +113,8 @@ contract LendingProtocol is Ownable, Pausable, ReentrancyGuard {
         require(collateralFactor <= BASIS_POINTS, "Bad collateral factor");
         require(liquidationThreshold <= BASIS_POINTS, "Bad threshold");
         require(collateralFactor < liquidationThreshold, "Unsafe parameters");
+        require(liquidationPenalty >= MIN_LIQUIDATION_PENALTY, "Bad liquidation penalty");
+        require(liquidationPenalty <= MAX_LIQUIDATION_PENALTY, "Bad liquidation penalty");
         require(reserveFactor <= BASIS_POINTS, "Bad reserve factor");
         require(priceOracle.getPrice(token) > 0, "Missing price");
 
@@ -141,6 +145,8 @@ contract LendingProtocol is Ownable, Pausable, ReentrancyGuard {
         require(collateralFactor <= BASIS_POINTS, "Bad collateral factor");
         require(liquidationThreshold <= BASIS_POINTS, "Bad threshold");
         require(collateralFactor < liquidationThreshold, "Unsafe parameters");
+        require(liquidationPenalty >= MIN_LIQUIDATION_PENALTY, "Bad liquidation penalty");
+        require(liquidationPenalty <= MAX_LIQUIDATION_PENALTY, "Bad liquidation penalty");
         require(reserveFactor <= BASIS_POINTS, "Bad reserve factor");
 
         Market storage market = markets[token];
@@ -153,7 +159,12 @@ contract LendingProtocol is Ownable, Pausable, ReentrancyGuard {
         emit MarketUpdated(token, collateralFactor, liquidationThreshold, borrowRate, reserveFactor);
     }
 
-    function supplyLiquidity(address token, uint256 amount) external nonReentrant whenNotPaused onlyActiveMarket(token) {
+    function supplyLiquidity(address token, uint256 amount)
+        external
+        nonReentrant
+        whenNotPaused
+        onlyActiveMarket(token)
+    {
         require(amount > 0, "Amount is zero");
 
         uint256 shares = previewSupplyShares(token, amount);
@@ -167,7 +178,12 @@ contract LendingProtocol is Ownable, Pausable, ReentrancyGuard {
         emit LiquiditySupplied(msg.sender, token, amount, shares);
     }
 
-    function withdrawLiquidity(address token, uint256 amount) external nonReentrant whenNotPaused onlyActiveMarket(token) {
+    function withdrawLiquidity(address token, uint256 amount)
+        external
+        nonReentrant
+        whenNotPaused
+        onlyActiveMarket(token)
+    {
         require(amount > 0, "Amount is zero");
         require(availableLiquidity(token) >= amount, "Liquidity is borrowed");
 
@@ -198,7 +214,12 @@ contract LendingProtocol is Ownable, Pausable, ReentrancyGuard {
         emit ProtocolReserveWithdrawn(token, to, amount);
     }
 
-    function depositCollateral(address token, uint256 amount) external nonReentrant whenNotPaused onlyActiveMarket(token) {
+    function depositCollateral(address token, uint256 amount)
+        external
+        nonReentrant
+        whenNotPaused
+        onlyActiveMarket(token)
+    {
         require(amount > 0, "Amount is zero");
 
         markets[token].token.safeTransferFrom(msg.sender, address(this), amount);
@@ -207,7 +228,12 @@ contract LendingProtocol is Ownable, Pausable, ReentrancyGuard {
         emit CollateralDeposited(msg.sender, token, amount);
     }
 
-    function withdrawCollateral(address token, uint256 amount) external nonReentrant whenNotPaused onlyActiveMarket(token) {
+    function withdrawCollateral(address token, uint256 amount)
+        external
+        nonReentrant
+        whenNotPaused
+        onlyActiveMarket(token)
+    {
         require(amount > 0, "Amount is zero");
         require(collateralDeposits[msg.sender][token] >= amount, "Not enough collateral");
 
@@ -249,12 +275,13 @@ contract LendingProtocol is Ownable, Pausable, ReentrancyGuard {
         emit Repaid(msg.sender, token, payment);
     }
 
-    function liquidate(
-        address user,
-        address debtToken,
-        address collateralToken,
-        uint256 repayAmount
-    ) external nonReentrant whenNotPaused onlyActiveMarket(debtToken) onlyActiveMarket(collateralToken) {
+    function liquidate(address user, address debtToken, address collateralToken, uint256 repayAmount)
+        external
+        nonReentrant
+        whenNotPaused
+        onlyActiveMarket(debtToken)
+        onlyActiveMarket(collateralToken)
+    {
         require(repayAmount > 0, "Amount is zero");
 
         _accrueDebt(user, debtToken);
@@ -263,7 +290,8 @@ contract LendingProtocol is Ownable, Pausable, ReentrancyGuard {
         DebtPosition storage debt = debts[user][debtToken];
         uint256 actualRepay = repayAmount > debt.principal ? debt.principal : repayAmount;
         uint256 collateralToSeize = collateralAmountForDebt(debtToken, collateralToken, actualRepay);
-        collateralToSeize = (collateralToSeize * (BASIS_POINTS + markets[collateralToken].liquidationPenalty)) / BASIS_POINTS;
+        collateralToSeize =
+            (collateralToSeize * (BASIS_POINTS + markets[collateralToken].liquidationPenalty)) / BASIS_POINTS;
 
         uint256 userCollateral = collateralDeposits[user][collateralToken];
 
@@ -399,7 +427,11 @@ contract LendingProtocol is Ownable, Pausable, ReentrancyGuard {
         return (amount * price) / PRICE_DECIMALS;
     }
 
-    function collateralAmountForDebt(address debtToken, address collateralToken, uint256 debtAmount) public view returns (uint256) {
+    function collateralAmountForDebt(address debtToken, address collateralToken, uint256 debtAmount)
+        public
+        view
+        returns (uint256)
+    {
         uint256 debtValueUsd = getTokenValueUsd(debtToken, debtAmount);
         uint256 collateralPrice = priceOracle.getPrice(collateralToken);
         require(collateralPrice > 0, "Missing collateral price");

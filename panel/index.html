@@ -42,6 +42,10 @@
               <input type="radio" name="modelType" value="exposicion" />
               Exposicion a trigo tokenizado
             </label>
+            <label>
+              <input type="radio" name="modelType" value="ticket" />
+              Ticket camionero
+            </label>
           </div>
 
           <label>
@@ -67,11 +71,11 @@
 
           <div class="two-cols">
             <label>
-              <span id="wheatAmountLabel">Trigo en garantia (bushels / wTK)</span>
+              <span id="wheatAmountLabel">Trigo en garantia (toneladas / wTK)</span>
               <input id="wheatAmount" type="number" min="0" step="100" value="10000" />
             </label>
             <label>
-              Precio trigo actual (USD/bushel)
+              <span id="currentPriceLabel">Precio trigo actual (USD/bushel)</span>
               <input id="currentPrice" type="number" min="0" step="0.001" value="5.901" />
             </label>
           </div>
@@ -119,9 +123,185 @@
               <input id="reserveFactor" type="number" min="0" max="100" step="1" value="10" />
             </label>
             <label>
-              Bonus liquidador (%)
-              <input id="liquidationBonus" type="number" min="0" max="100" step="1" value="5" />
+              Bonus liquidador (% fijo 5 a 10)
+              <input id="liquidationBonus" type="number" min="5" max="10" step="0.5" value="5" />
             </label>
+          </div>
+
+          <div class="section-title compact">
+            <h2>Oracle y conversion</h2>
+            <p>Parametros de lectura del precio antes de ejecutar una operacion.</p>
+          </div>
+
+          <div class="admin-note">
+            <strong>Administrador de activo tokenizado</strong>
+            <p>
+              Caso de estudio: el oracle real todavia no esta conectado. El administrador puede cambiar
+              activo, simbolo, unidad y precio manual para probar la misma logica con trigo, soja,
+              girasol u otros commodities. Ejemplos: wTK para trigo, sTK para soja, gTK para girasol.
+            </p>
+          </div>
+
+          <div class="three-cols">
+            <label>
+              Activo fisico
+              <input id="commodityName" type="text" value="Trigo" />
+            </label>
+            <label>
+              Token emitido
+              <input id="ticketTokenSymbol" type="text" value="wTK" />
+            </label>
+            <label>
+              Unidad del token
+              <input id="tokenUnit" type="text" value="tonelada" />
+            </label>
+          </div>
+
+          <div class="two-cols">
+            <label>
+              Unidad precio mercado
+              <input id="referenceUnit" type="text" value="bushel" />
+            </label>
+            <label>
+              Unidades mercado por 1 token
+              <input id="unitsPerToken" type="number" min="0" step="0.0001" value="36.7437" />
+            </label>
+          </div>
+
+          <div class="three-cols">
+            <label>
+              USDC/USD
+              <input id="usdcPrice" type="number" min="0.5" step="0.001" value="1" />
+            </label>
+            <label>
+              Max age oracle (min)
+              <input id="maxAgeMinutes" type="number" min="1" max="1440" step="1" value="60" />
+            </label>
+            <label>
+              Edad ultimo precio (min)
+              <input id="lastPriceAgeMinutes" type="number" min="0" step="1" value="10" />
+            </label>
+          </div>
+
+          <div class="section-title compact">
+            <h2>Nueva operacion</h2>
+            <p>Vista previa de la accion que se cargaria contra el protocolo.</p>
+          </div>
+
+          <div class="two-cols">
+            <label>
+              Operacion
+              <select id="operationType">
+                <option value="supply">Molinos aporta liquidez</option>
+                <option value="deposit">AFRA deposita garantia</option>
+                <option value="borrow" selected>AFRA toma prestamo</option>
+                <option value="repay">AFRA paga deuda</option>
+                <option value="liquidate">Liquidador ejecuta riesgo</option>
+              </select>
+            </label>
+            <label>
+              Monto operacion
+              <input id="operationAmount" type="number" min="0" step="100" value="40000" />
+            </label>
+          </div>
+
+          <div class="section-title compact">
+            <h2>Ticket token</h2>
+            <p>Emision educativa de un comprobante tokenizado para mostrar el flujo fuera del contrato.</p>
+          </div>
+
+          <label>
+            Cartera receptora del ticket
+            <input id="ticketWallet" type="text" value="0xCamionerosEntreRios00000000000000000001" />
+          </label>
+
+          <div class="two-cols">
+            <label>
+              <span id="ticketAmountLabel">wTK otorgados</span>
+              <input id="ticketAmount" type="number" min="0" step="100" value="10000" />
+            </label>
+            <label>
+              Plazo ticket (meses)
+              <input id="ticketTermMonths" type="number" min="1" step="1" value="6" />
+            </label>
+          </div>
+
+          <div class="three-cols">
+            <label>
+              Activo de salida
+              <input id="conversionAsset" type="text" value="USDT" />
+            </label>
+            <label>
+              Descuento mercado (%)
+              <input id="marketDiscount" type="number" min="0" max="30" step="0.5" value="2" />
+            </label>
+            <label>
+              Valor camion ejemplo
+              <input id="truckCost" type="number" min="0" step="1000" value="85000" />
+            </label>
+          </div>
+
+          <label>
+            Mercado secundario teorico
+            <input id="secondaryMarket" type="text" value="Mesa tokenizada / pool estable auditado" />
+          </label>
+
+          <div class="section-title compact">
+            <h2>Admin testnet</h2>
+            <p>Con wallet conectada, estos botones ejecutan el flujo real sobre contratos deployados.</p>
+          </div>
+
+          <div class="admin-note">
+            <strong>Modo prueba real</strong>
+            <p>
+              Pega las direcciones impresas por el deploy. El administrador firma cada paso desde la wallet.
+              El panel no guarda claves privadas.
+            </p>
+          </div>
+
+          <div class="two-cols">
+            <label>
+              AgroTicket1155
+              <input id="ticketContractAddress" type="text" placeholder="0x..." />
+            </label>
+            <label>
+              AgroTicketReceiptVault
+              <input id="vaultContractAddress" type="text" placeholder="0x..." />
+            </label>
+          </div>
+
+          <div class="two-cols">
+            <label>
+              LendingProtocol
+              <input id="lendingContractAddress" type="text" placeholder="0x..." />
+            </label>
+            <label>
+              Activo ERC20 respaldado
+              <input id="assetContractAddress" type="text" placeholder="0x... wTK / sTK / gTK" />
+            </label>
+          </div>
+
+          <label>
+            Ticket ID existente opcional
+            <input id="manualTicketId" type="number" min="0" step="1" placeholder="Usar si el ticket ya fue creado" />
+          </label>
+
+          <label>
+            Documento / referencia legal para hash
+            <input id="documentReference" type="text" value="contrato-ticket-tokenizado-v1" />
+          </label>
+
+          <div class="admin-actions">
+            <button id="connectWallet" type="button">Conectar wallet</button>
+            <button id="createTicketOnchain" type="button">Crear ticket</button>
+            <button id="issueTicketOnchain" type="button">Emitir ticket</button>
+            <button id="lockTicketOnchain" type="button">Bloquear en vault</button>
+            <button id="depositReceiptOnchain" type="button">Usar en lending</button>
+          </div>
+
+          <div class="flow-box">
+            <strong>Estado testnet</strong>
+            <p id="testnetStatus">Sin wallet conectada.</p>
           </div>
         </form>
 
@@ -133,7 +313,7 @@
 
           <div class="metrics">
             <div>
-              <span>Valor del trigo en garantia</span>
+              <span id="collateralValueLabel">Valor del trigo en garantia</span>
               <strong id="collateralValue">$0</strong>
             </div>
             <div>
@@ -141,7 +321,7 @@
               <strong id="maxBorrow">$0</strong>
             </div>
             <div>
-              <span>Deuda estimada al vencimiento</span>
+              <span id="finalDebtLabel">Deuda estimada al vencimiento</span>
               <strong id="finalDebt">$0</strong>
             </div>
             <div>
@@ -150,12 +330,30 @@
             </div>
           </div>
 
+          <div class="oracle-grid">
+            <div>
+              <span id="tokenPriceLabel">Precio 1 wTK</span>
+              <strong id="wTKPrice">$0</strong>
+              <small id="tokenPriceDetail">1 wTK = 1 tonelada de trigo</small>
+            </div>
+            <div>
+              <span>Estado oracle</span>
+              <strong id="oracleStatus">Vigente</strong>
+              <small id="oracleDetail">Dato dentro del max age.</small>
+            </div>
+            <div>
+              <span>Operacion cargada</span>
+              <strong id="operationStatus">Lista</strong>
+              <small id="operationDetail">La operacion no rompe el limite actual.</small>
+            </div>
+          </div>
+
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
                   <th>Escenario</th>
-                  <th>Precio trigo</th>
+                  <th id="priceHeader">Precio trigo</th>
                   <th>Valor garantia</th>
                   <th>Health factor</th>
                   <th>Lectura</th>
@@ -184,6 +382,45 @@
               <strong id="protocolReserve">$0</strong>
             </div>
           </div>
+
+          <div class="flow-box">
+            <strong>Lectura de la proxima transaccion</strong>
+            <p id="operationText"></p>
+          </div>
+
+          <div class="risk-lesson">
+            <strong>Doble lectura del riesgo</strong>
+            <p id="debtRiskText"></p>
+          </div>
+
+          <div class="ticket-card">
+            <div class="ticket-head">
+              <div>
+                <span>Ticket token emitido</span>
+                <strong id="ticketId">LTP-0000</strong>
+              </div>
+              <small id="ticketTerm">Plazo 6 meses</small>
+            </div>
+            <div class="ticket-grid">
+              <div>
+                <span>Receptor</span>
+                <strong id="ticketReceiver">Asociacion Camioneros</strong>
+              </div>
+              <div>
+                <span id="ticketTokenLabel">wTK otorgados</span>
+                <strong id="ticketWtk">0 wTK</strong>
+              </div>
+              <div>
+                <span>Valor nocional</span>
+                <strong id="ticketNotional">$0</strong>
+              </div>
+              <div>
+                <span>Salida secundaria</span>
+                <strong id="ticketStable">$0</strong>
+              </div>
+            </div>
+            <p id="ticketText"></p>
+          </div>
         </section>
       </section>
 
@@ -211,8 +448,35 @@
           </div>
         </div>
       </section>
+
+      <footer class="source-footer">
+        <div>
+          <strong>Fuentes y entes de referencia</strong>
+          <p>
+            Links reales para que el caso de estudio muestre de donde podrian salir precios,
+            trazabilidad fiscal, datos publicos y oraculos.
+          </p>
+        </div>
+        <nav aria-label="Fuentes oficiales y tecnicas">
+          <a href="https://www.arca.gob.ar/" target="_blank" rel="noreferrer">ARCA</a>
+          <a href="https://www.argentina.gob.ar/economia/agricultura" target="_blank" rel="noreferrer">
+            Agricultura, Ganaderia y Pesca
+          </a>
+          <a href="https://www.magyp.gob.ar/mercadosagropecuarios/precios.php" target="_blank" rel="noreferrer">
+            FOB / FAS oficial
+          </a>
+          <a href="https://www.pyth.network/" target="_blank" rel="noreferrer">Pyth Network</a>
+          <a href="https://www.pyth.network/price-feeds" target="_blank" rel="noreferrer">Pyth Price Feeds</a>
+        </nav>
+        <small>
+          Caso educativo. Estos enlaces no implican integracion oficial ni aval institucional; sirven como
+          referencias publicas para modelar una arquitectura auditable.
+        </small>
+      </footer>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
     <script src="./app.js"></script>
+    <script src="./testnet-admin.js"></script>
   </body>
 </html>
