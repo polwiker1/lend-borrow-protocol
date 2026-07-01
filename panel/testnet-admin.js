@@ -11,7 +11,21 @@ const VAULT_ABI = [
   "function RECEIPT_UNIT() view returns (uint256)",
 ];
 
-const LENDING_ABI = ["function depositCollateral(address token,uint256 amount)"];
+const LENDING_ABI = [
+  "function depositCollateral(address token,uint256 amount)",
+  "function supplyLiquidity(address token,uint256 amount)",
+  "function borrow(address token,uint256 amount)",
+  "function getMaxBorrowableTokenAmount(address user,address borrowToken) view returns (uint256)",
+  "function availableLiquidity(address token) view returns (uint256)",
+];
+
+const ERC20_ABI = [
+  "function mint(address to,uint256 amount)",
+  "function approve(address spender,uint256 amount) returns (bool)",
+  "function balanceOf(address account) view returns (uint256)",
+  "function decimals() view returns (uint8)",
+  "function symbol() view returns (string)",
+];
 
 let testnetProvider;
 let testnetSigner;
@@ -32,6 +46,10 @@ function requireEthers() {
 
 function parseUnits18(value) {
   return window.ethers.parseUnits(String(value), 18);
+}
+
+function formatUnits18(value) {
+  return window.ethers.formatUnits(value, 18);
 }
 
 async function sha256Bytes32(text) {
@@ -59,7 +77,8 @@ async function createTicketOnchain() {
   const ticket = contractAt(inputValue("ticketContractAddress"), TICKET_ABI);
   const borrower = inputValue("ticketWallet");
   const asset = inputValue("assetContractAddress");
-  const ticketAmount = numericValue("ticketAmount");
+  const ticketKind = inputValue("ticketKind");
+  const ticketAmount = ticketKind === "secondary" ? numericValue("operationAmount") : numericValue("ticketAmount");
   const currentPrice = numericValue("currentPrice");
   const unitsPerToken = numericValue("unitsPerToken");
   const usdcPrice = numericValue("usdcPrice") || 1;
@@ -129,6 +148,48 @@ async function depositReceiptOnchain() {
   testnetStatus(`Receipt depositado en lending. Tx ${depositTx.hash}`);
 }
 
+async function fundAUsdLiquidityOnchain() {
+  const lending = contractAt(inputValue("lendingContractAddress"), LENDING_ABI);
+  const borrowToken = contractAt(inputValue("borrowTokenAddress"), ERC20_ABI);
+  const signerAddress = await testnetSigner.getAddress();
+  const amount = parseUnits18(numericValue("liquidityAmount"));
+
+  testnetStatus(`Minteando aUSD de prueba para ${signerAddress}...`);
+  const mintTx = await borrowToken.mint(signerAddress, amount);
+  await mintTx.wait();
+
+  testnetStatus("Aprobando aUSD para LendingProtocol...");
+  const approveTx = await borrowToken.approve(inputValue("lendingContractAddress"), amount);
+  await approveTx.wait();
+
+  testnetStatus("Fondeando liquidez aUSD en LendingProtocol...");
+  const supplyTx = await lending.supplyLiquidity(inputValue("borrowTokenAddress"), amount);
+  await supplyTx.wait();
+  testnetStatus(`Liquidez aUSD fondeada. Tx ${supplyTx.hash}`);
+}
+
+async function borrowAUsdOnchain() {
+  const lending = contractAt(inputValue("lendingContractAddress"), LENDING_ABI);
+  const borrower = await testnetSigner.getAddress();
+  const borrowTokenAddress = inputValue("borrowTokenAddress");
+  const amount = parseUnits18(numericValue("borrowAUsdAmount"));
+  const maxBorrow = await lending.getMaxBorrowableTokenAmount(borrower, borrowTokenAddress);
+  const available = await lending.availableLiquidity(borrowTokenAddress);
+
+  if (amount > maxBorrow) {
+    throw new Error(`Monto sobre limite. Maximo para esta wallet: ${formatUnits18(maxBorrow)} aUSD.`);
+  }
+
+  if (amount > available) {
+    throw new Error(`No hay liquidez suficiente. Disponible: ${formatUnits18(available)} aUSD.`);
+  }
+
+  testnetStatus(`Pidiendo ${numericValue("borrowAUsdAmount")} aUSD contra agTICKET depositado...`);
+  const borrowTx = await lending.borrow(borrowTokenAddress, amount);
+  await borrowTx.wait();
+  testnetStatus(`Prestamo aUSD recibido. Tx ${borrowTx.hash}`);
+}
+
 function daysInSeconds() {
   return 24 * 60 * 60;
 }
@@ -153,3 +214,5 @@ bindTestnetButton("createTicketOnchain", createTicketOnchain);
 bindTestnetButton("issueTicketOnchain", issueTicketOnchain);
 bindTestnetButton("lockTicketOnchain", lockTicketOnchain);
 bindTestnetButton("depositReceiptOnchain", depositReceiptOnchain);
+bindTestnetButton("fundAUsdLiquidityOnchain", fundAUsdLiquidityOnchain);
+bindTestnetButton("borrowAUsdOnchain", borrowAUsdOnchain);

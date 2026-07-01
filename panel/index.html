@@ -75,19 +75,19 @@
               <input id="wheatAmount" type="number" min="0" step="100" value="10000" />
             </label>
             <label>
-              <span id="currentPriceLabel">Precio trigo actual (USD/bushel)</span>
-              <input id="currentPrice" type="number" min="0" step="0.001" value="5.901" />
+              <span id="currentPriceLabel">Precio trigo actual (USD/tonelada)</span>
+              <input id="currentPrice" type="number" min="0" step="0.01" value="216.82" />
             </label>
           </div>
 
           <div class="two-cols">
             <label>
               Precio esperado a diciembre
-              <input id="decemberPrice" type="number" min="0" step="0.001" value="6.12" />
+              <input id="decemberPrice" type="number" min="0" step="0.01" value="224.87" />
             </label>
             <label>
               Precio esperado a marzo
-              <input id="marchPrice" type="number" min="0" step="0.001" value="6.32" />
+              <input id="marchPrice" type="number" min="0" step="0.01" value="232.25" />
             </label>
           </div>
 
@@ -160,11 +160,11 @@
           <div class="two-cols">
             <label>
               Unidad precio mercado
-              <input id="referenceUnit" type="text" value="bushel" />
+              <input id="referenceUnit" type="text" value="tonelada" />
             </label>
             <label>
               Unidades mercado por 1 token
-              <input id="unitsPerToken" type="number" min="0" step="0.0001" value="36.7437" />
+              <input id="unitsPerToken" type="number" min="0" step="0.0001" value="1" />
             </label>
           </div>
 
@@ -184,25 +184,33 @@
           </div>
 
           <div class="section-title compact">
-            <h2>Nueva operacion</h2>
-            <p>Vista previa de la accion que se cargaria contra el protocolo.</p>
+            <h2>Operacion secundaria</h2>
+            <p>Vista previa de un represtamo o accion nueva. No modifica el ticket primario.</p>
           </div>
 
           <div class="two-cols">
             <label>
-              Operacion
+              Accion secundaria
               <select id="operationType">
                 <option value="supply">Molinos aporta liquidez</option>
                 <option value="deposit">AFRA deposita garantia</option>
-                <option value="borrow" selected>AFRA toma prestamo</option>
+                <option value="borrow" selected>Solicitar represtamo SLT</option>
                 <option value="repay">AFRA paga deuda</option>
                 <option value="liquidate">Liquidador ejecuta riesgo</option>
               </select>
             </label>
             <label>
-              Monto operacion
+              Monto solicitado en represtamo
               <input id="operationAmount" type="number" min="0" step="100" value="40000" />
             </label>
+          </div>
+
+          <div class="admin-note">
+            <strong>LTP vs SLT</strong>
+            <p>
+              LTP es el ticket primario emitido sobre la operacion original. SLT es un ticket secundario
+              de represtamo: se calcula sobre un ticket anterior y aplica un limite didactico del 65%.
+            </p>
           </div>
 
           <div class="section-title compact">
@@ -217,12 +225,26 @@
 
           <div class="two-cols">
             <label>
+              Tipo de ticket
+              <select id="ticketKind">
+                <option value="primary" selected>LTP - ticket primario</option>
+                <option value="secondary">SLT - ticket secundario</option>
+              </select>
+            </label>
+            <label>
               <span id="ticketAmountLabel">wTK otorgados</span>
               <input id="ticketAmount" type="number" min="0" step="100" value="10000" />
             </label>
+          </div>
+
+          <div class="two-cols">
             <label>
               Plazo ticket (meses)
               <input id="ticketTermMonths" type="number" min="1" step="1" value="6" />
+            </label>
+            <label>
+              Limite SLT sobre ticket anterior (%)
+              <input id="secondaryTicketFactor" type="number" min="0" max="65" step="1" value="65" />
             </label>
           </div>
 
@@ -262,28 +284,50 @@
           <div class="two-cols">
             <label>
               AgroTicket1155
-              <input id="ticketContractAddress" type="text" placeholder="0x..." />
+              <input id="ticketContractAddress" type="text" value="0xC63fDCE9feAd8B71E7D8E72A0bD90d9B3BC2b8ad" />
             </label>
             <label>
               AgroTicketReceiptVault
-              <input id="vaultContractAddress" type="text" placeholder="0x..." />
+              <input id="vaultContractAddress" type="text" value="0x2D0B31405d7E6151E2a55b0318BDb1c3FD68B4a1" />
             </label>
           </div>
 
           <div class="two-cols">
             <label>
               LendingProtocol
-              <input id="lendingContractAddress" type="text" placeholder="0x..." />
+              <input id="lendingContractAddress" type="text" value="0xd56FDA75E70F2C15376ec48f612C4405fF64b796" />
             </label>
             <label>
               Activo ERC20 respaldado
-              <input id="assetContractAddress" type="text" placeholder="0x... wTK / sTK / gTK" />
+              <input id="assetContractAddress" type="text" value="0xDDB5C2Aa89Ad4E4dF668dC42c242618C0456650b" />
             </label>
           </div>
 
+          <div class="two-cols">
+            <label>
+              Token prestado aUSD
+              <input id="borrowTokenAddress" type="text" value="0x34155Bd9688756fDDcCccc0A01fa993661A840CC" />
+            </label>
+            <label>
+              Liquidez aUSD para fondear
+              <input id="liquidityAmount" type="number" min="0" step="1000" value="2000000" />
+            </label>
+          </div>
+
+          <div class="two-cols">
+            <label>
+              Monto aUSD a pedir
+              <input id="borrowAUsdAmount" type="number" min="0" step="1000" value="1000000" />
+            </label>
+            <div class="admin-note inline-note">
+              <strong>Roles</strong>
+              <p>Fondear liquidez lo firma Molinos/admin. Pedir aUSD lo firma la wallet que deposito agTICKET.</p>
+            </div>
+          </div>
+
           <label>
-            Ticket ID existente opcional
-            <input id="manualTicketId" type="number" min="0" step="1" placeholder="Usar si el ticket ya fue creado" />
+            Ticket ID testnet existente
+            <input id="manualTicketId" type="number" min="0" step="1" placeholder="Solo si ya fue creado on-chain" />
           </label>
 
           <label>
@@ -297,6 +341,8 @@
             <button id="issueTicketOnchain" type="button">Emitir ticket</button>
             <button id="lockTicketOnchain" type="button">Bloquear en vault</button>
             <button id="depositReceiptOnchain" type="button">Usar en lending</button>
+            <button id="fundAUsdLiquidityOnchain" type="button">Fondear aUSD</button>
+            <button id="borrowAUsdOnchain" type="button">Pedir aUSD</button>
           </div>
 
           <div class="flow-box">

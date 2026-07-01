@@ -310,9 +310,13 @@ th {
 
 .admin-actions {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 8px;
   margin-top: 6px;
+}
+
+.inline-note {
+  min-height: 78px;
 }
 
 .admin-actions button {

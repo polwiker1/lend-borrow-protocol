@@ -25,8 +25,10 @@ const ids = [
   "operationType",
   "operationAmount",
   "ticketWallet",
+  "ticketKind",
   "ticketAmount",
   "ticketTermMonths",
+  "secondaryTicketFactor",
   "conversionAsset",
   "marketDiscount",
   "truckCost",
@@ -109,6 +111,12 @@ function liquidationTokenPrice(model, data) {
 }
 
 function applyModelDefaults(model) {
+  $("currentPrice").value = "216.82";
+  $("decemberPrice").value = "224.87";
+  $("marchPrice").value = "232.25";
+  $("referenceUnit").value = "tonelada";
+  $("unitsPerToken").value = "1";
+
   if (model === "productivo") {
     $("lender").value = "Molinos Rio Parana";
     $("borrower").value = "Cooperativa AFRA - Asociacion Federada de Recolectores Argentinos";
@@ -119,12 +127,11 @@ function applyModelDefaults(model) {
     $("operationAmount").value = "40000";
     $("operationType").value = "borrow";
     $("ticketAmount").value = "10000";
+    $("ticketKind").value = "primary";
     $("ticketTermMonths").value = "6";
     $("commodityName").value = "Trigo";
     $("ticketTokenSymbol").value = "wTK";
     $("tokenUnit").value = "tonelada";
-    $("referenceUnit").value = "bushel";
-    $("unitsPerToken").value = "36.7437";
     $("wheatAmountLabel").textContent = "Trigo en garantia (toneladas / wTK)";
     $("borrowAmountLabel").textContent = "Prestamo solicitado (aUSD)";
     return;
@@ -137,10 +144,11 @@ function applyModelDefaults(model) {
     $("borrowToken").value = "Ticket wTK - credito en trigo tokenizado";
     $("wheatAmount").value = "3000000";
     $("borrowAmount").value = "10000";
-    $("operationAmount").value = "10000";
+    $("operationAmount").value = "6500";
     $("operationType").value = "borrow";
     $("ticketWallet").value = "0xCamionerosEntreRios00000000000000000001";
     $("ticketAmount").value = "10000";
+    $("ticketKind").value = "primary";
     $("ticketTermMonths").value = "6";
     $("conversionAsset").value = "USDT";
     $("marketDiscount").value = "2";
@@ -149,8 +157,6 @@ function applyModelDefaults(model) {
     $("commodityName").value = "Trigo";
     $("ticketTokenSymbol").value = "wTK";
     $("tokenUnit").value = "tonelada";
-    $("referenceUnit").value = "bushel";
-    $("unitsPerToken").value = "36.7437";
     $("wheatAmountLabel").textContent = "Garantia documentada estimada (USD)";
     $("borrowAmountLabel").textContent = "wTK solicitados por ticket";
     return;
@@ -165,12 +171,11 @@ function applyModelDefaults(model) {
   $("operationAmount").value = "100";
   $("operationType").value = "borrow";
   $("ticketAmount").value = "100";
+  $("ticketKind").value = "primary";
   $("ticketTermMonths").value = "6";
   $("commodityName").value = "Trigo";
   $("ticketTokenSymbol").value = "wTK";
   $("tokenUnit").value = "tonelada";
-  $("referenceUnit").value = "bushel";
-  $("unitsPerToken").value = "36.7437";
   $("wheatAmountLabel").textContent = "Garantia estable depositada (aUSD)";
   $("borrowAmountLabel").textContent = "Prestamo solicitado (wTK / toneladas)";
 }
@@ -178,6 +183,7 @@ function applyModelDefaults(model) {
 function operationPreview(model, data) {
   const amount = data.operationAmount;
   const isProductive = model === "productivo";
+  const isSecondaryBorrow = model === "ticket" && data.operationType === "borrow";
 
   if (data.oracleIsStale) {
     return {
@@ -203,6 +209,21 @@ function operationPreview(model, data) {
   }
 
   if (data.operationType === "borrow") {
+    if (isSecondaryBorrow) {
+      const secondaryFactor = clamp(data.secondaryTicketFactor, 0, 65);
+      const secondaryLimitTokens = data.ticketAmount * (secondaryFactor / 100);
+      const secondaryLimitValue = secondaryLimitTokens * data.currentTokenPrice;
+      const requestedValue = amount * data.currentTokenPrice;
+      const fits = amount <= secondaryLimitTokens;
+
+      return {
+        status: fits ? "Lista" : "Sobre limite",
+        text: fits
+          ? `${data.borrower} podria solicitar un SLT por ${number.format(amount)} ${data.tokenSymbol}. El ticket primario base es de ${number.format(data.ticketAmount)} ${data.tokenSymbol} y el limite secundario aplicado es ${number.format(secondaryLimitTokens)} ${data.tokenSymbol} (${money.format(secondaryLimitValue)}).`
+          : `El SLT supera el limite secundario: pide ${number.format(amount)} ${data.tokenSymbol} (${money.format(requestedValue)}) contra ${number.format(secondaryLimitTokens)} ${data.tokenSymbol} (${money.format(secondaryLimitValue)}) habilitados. El ticket primario no deberia reutilizarse como si fuera garantia nueva limpia.`,
+      };
+    }
+
     const requestedValue = isProductive ? amount : amount * data.currentTokenPrice;
     const fits = requestedValue <= data.maxBorrowValue;
     return {
@@ -255,8 +276,10 @@ function render() {
   const operationType = $("operationType").value;
   const operationAmount = val("operationAmount");
   const ticketWallet = $("ticketWallet").value.trim() || "0xTicketReceiver";
+  const ticketKind = $("ticketKind").value;
   const ticketAmount = val("ticketAmount");
   const ticketTermMonths = val("ticketTermMonths");
+  const secondaryTicketFactor = clamp(val("secondaryTicketFactor"), 0, 65);
   const conversionAsset = $("conversionAsset").value.trim() || "USDT";
   const marketDiscount = val("marketDiscount");
   const truckCost = val("truckCost");
@@ -280,6 +303,7 @@ function render() {
     lender,
     borrower,
     wheatAmount,
+    borrowAmount,
     cashCollateral: collateralValue,
     finalDebt,
     finalDebtWTK,
@@ -300,8 +324,10 @@ function render() {
     lastPriceAgeMinutes,
     oracleIsStale: lastPriceAgeMinutes > maxAgeMinutes,
     ticketWallet,
+    ticketKind,
     ticketAmount,
     ticketTermMonths,
+    secondaryTicketFactor,
     conversionAsset,
     marketDiscount,
     truckCost,
@@ -335,11 +361,12 @@ function render() {
     ? money.format(protocolReserve)
     : `${number.format(protocolReserve)} ${tokenSymbol}`;
   $("currentPriceLabel").textContent = `Precio ${commodityName.toLowerCase()} actual (USD/${referenceUnit})`;
-  $("ticketAmountLabel").textContent = `${tokenSymbol} otorgados`;
+  $("ticketAmountLabel").textContent =
+    ticketKind === "secondary" ? `${tokenSymbol} del ticket primario base` : `${tokenSymbol} otorgados LTP`;
   $("tokenPriceLabel").textContent = `Precio 1 ${tokenSymbol}`;
   $("wTKPrice").textContent = `${money.format(currentTokenPrice)} / ${tokenUnit}`;
   $("tokenPriceDetail").textContent =
-    `1 ${tokenSymbol} = 1 ${tokenUnit}; precio manual ${money.format(currentPrice)} / ${referenceUnit}; conversion ${number.format(unitsPerToken)} ${referenceUnit} por token.`;
+    `1 ${tokenSymbol} = 1 ${tokenUnit}; precio manual ${money.format(currentPrice)} / ${referenceUnit}; factor de conversion ${number.format(unitsPerToken)} ${referenceUnit} por token.`;
   $("priceHeader").textContent = `Precio ${commodityName.toLowerCase()}`;
   $("ticketTokenLabel").textContent = `${tokenSymbol} otorgados`;
 
@@ -424,10 +451,10 @@ function renderDebtRiskLesson(model, data) {
   const debtDown = debtNow * 0.9;
 
   $("debtRiskText").textContent =
-    `${data.borrower} recibe o usa ${number.format(data.finalDebtWTK)} ${data.tokenSymbol} y debe devolver ${data.tokenSymbol}. ` +
+    `${data.borrower} recibe ${number.format(data.borrowAmount)} ${data.tokenSymbol} y al vencimiento debe devolver ${number.format(data.finalDebtWTK)} ${data.tokenSymbol} con interes. ` +
     `Si ${data.commodityName.toLowerCase()} sube 10%, la deuda medida en estable sube de ${money.format(debtNow)} a ${money.format(debtUp)}. ` +
     `Si ${data.commodityName.toLowerCase()} baja 10%, la deuda medida en estable baja a ${money.format(debtDown)}. ` +
-    `Por eso puede estar saludable por liquidacion, pero sobre limite por nueva toma: son controles distintos.`;
+    `Liquidacion y nueva toma son controles distintos: puede no ser liquidable, pero igual quedar bloqueado para emitir mas deuda.`;
 }
 
 function shortWallet(wallet) {
@@ -436,35 +463,42 @@ function shortWallet(wallet) {
 }
 
 function ticketIdFor(data) {
-  const base = `${data.borrower}-${data.ticketAmount}-${data.ticketTermMonths}-${data.ticketWallet}`;
+  const prefix = data.ticketKind === "secondary" ? "SLT" : "LTP";
+  const emittedAmount = data.ticketKind === "secondary" ? data.operationAmount : data.ticketAmount;
+  const base = `${prefix}-${data.borrower}-${emittedAmount}-${data.ticketTermMonths}-${data.ticketWallet}`;
   let hash = 0;
 
   for (let i = 0; i < base.length; i++) {
     hash = (hash * 31 + base.charCodeAt(i)) % 100000;
   }
 
-  return `LTP-${String(hash).padStart(5, "0")}`;
+  return `${prefix}-${String(hash).padStart(5, "0")}`;
 }
 
 function renderTicket(data) {
   const discount = clamp(data.marketDiscount, 0, 30);
-  const ticketNotional = data.ticketAmount * data.currentTokenPrice;
+  const emittedAmount = data.ticketKind === "secondary" ? data.operationAmount : data.ticketAmount;
+  const ticketNotional = emittedAmount * data.currentTokenPrice;
   const stableValue = ticketNotional * (1 - discount / 100);
   const truckUnits = data.truckCost > 0 ? stableValue / data.truckCost : 0;
   const ticketId = ticketIdFor(data);
+  const ticketKindLabel = data.ticketKind === "secondary" ? "ticket secundario SLT" : "ticket primario LTP";
 
   $("ticketId").textContent = ticketId;
   $("ticketTerm").textContent = `Plazo ${number.format(data.ticketTermMonths)} meses`;
   $("ticketReceiver").textContent = data.borrower;
-  $("ticketWtk").textContent = `${number.format(data.ticketAmount)} ${data.tokenSymbol}`;
+  $("ticketWtk").textContent = `${number.format(emittedAmount)} ${data.tokenSymbol}`;
   $("ticketNotional").textContent = money.format(ticketNotional);
   $("ticketStable").textContent = `${money.format(stableValue)} en ${data.conversionAsset}`;
   $("ticketText").textContent =
-    `${data.lender} otorga a ${data.borrower} un ticket token por ${number.format(data.ticketAmount)} ${data.tokenSymbol} ` +
+    `${data.lender} otorga a ${data.borrower} un ${ticketKindLabel} por ${number.format(emittedAmount)} ${data.tokenSymbol} ` +
     `en la cartera ${shortWallet(data.ticketWallet)}. Con el precio oracle actual, el valor nocional es ${money.format(ticketNotional)}. ` +
     `Si ese ticket se negocia en ${data.secondaryMarket} con un descuento del ${number.format(discount)}%, ` +
     `la salida estimada seria ${money.format(stableValue)} en ${data.conversionAsset}. ` +
-    `A modo de ejemplo, eso equivale a ${number.format(truckUnits)} camion(es) de ${money.format(data.truckCost)} cada uno.`;
+    `A modo de ejemplo, eso equivale a ${number.format(truckUnits)} camion(es) de ${money.format(data.truckCost)} cada uno.` +
+    (data.ticketKind === "secondary"
+      ? ` Este SLT nace sobre un LTP base de ${number.format(data.ticketAmount)} ${data.tokenSymbol} y no deberia usarse como si fuera un LTP primario sin una nueva auditoria.`
+      : "");
 }
 
 ids.forEach((id) => {
