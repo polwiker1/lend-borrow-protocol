@@ -7,6 +7,7 @@ import {AgroTicketReceiptVault} from "../src/AgroTicketReceiptVault.sol";
 import {LendingProtocol} from "../src/LendingProtocol.sol";
 import {MockPriceOracle} from "../src/MockPriceOracle.sol";
 import {MockToken} from "../src/MockToken.sol";
+import {IAgroTicket1155, SLT} from "../src/SLT.sol";
 
 contract DeployTestnetStudy is Script {
     uint256 private constant WAD = 1e18;
@@ -22,6 +23,7 @@ contract DeployTestnetStudy is Script {
         LendingProtocol lending = new LendingProtocol(address(oracle));
         AgroTicket1155 tickets = new AgroTicket1155(ticketBaseUri, admin);
         AgroTicketReceiptVault vault = new AgroTicketReceiptVault(tickets, admin);
+        SLT slt = new SLT(IAgroTicket1155(address(tickets)), admin);
         MockToken agroUSD = new MockToken("Agro USD Testnet", "aUSD", 18, 0, admin);
         MockToken wTK = new MockToken("Wheat Token Testnet", "wTK", 18, 0, admin);
         MockToken sTK = new MockToken("Soy Token Testnet", "sTK", 18, 0, admin);
@@ -51,6 +53,7 @@ contract DeployTestnetStudy is Script {
         console2.log("LendingProtocol", address(lending));
         console2.log("AgroTicket1155", address(tickets));
         console2.log("AgroTicketReceiptVault", address(vault));
+        console2.log("SLT", address(slt));
         console2.log("AgroUSD", address(agroUSD));
         console2.log("wTK", address(wTK));
         console2.log("sTK", address(sTK));

@@ -70,6 +70,7 @@ contract LendingProtocol is Ownable, Pausable, ReentrancyGuard {
     event CollateralDeposited(address indexed user, address indexed token, uint256 amount);
     event CollateralWithdrawn(address indexed user, address indexed token, uint256 amount);
     event Borrowed(address indexed user, address indexed token, uint256 amount);
+    event BorrowedTo(address indexed user, address indexed recipient, address indexed token, uint256 amount);
     event Repaid(address indexed user, address indexed token, uint256 amountPaid);
     event BadDebtRecorded(address indexed user, address indexed token, uint256 amount);
     event ProtocolReserveAccrued(address indexed token, uint256 amount);
@@ -245,18 +246,35 @@ contract LendingProtocol is Ownable, Pausable, ReentrancyGuard {
     }
 
     function borrow(address token, uint256 amount) external nonReentrant whenNotPaused onlyActiveMarket(token) {
+        _borrow(token, amount, msg.sender, msg.sender);
+    }
+
+    function borrowTo(address token, uint256 amount, address recipient)
+        external
+        nonReentrant
+        whenNotPaused
+        onlyActiveMarket(token)
+    {
+        require(recipient != address(0), "Invalid recipient");
+        _borrow(token, amount, msg.sender, recipient);
+    }
+
+    function _borrow(address token, uint256 amount, address borrower_, address recipient) internal {
         require(amount > 0, "Amount is zero");
         require(availableLiquidity(token) >= amount, "Not enough liquidity");
 
-        _accrueDebt(msg.sender, token);
+        _accrueDebt(borrower_, token);
 
-        debts[msg.sender][token].principal += amount;
+        debts[borrower_][token].principal += amount;
         markets[token].totalLiquidityBorrowed += amount;
 
-        require(isHealthy(msg.sender), "Borrow exceeds collateral");
+        require(isHealthy(borrower_), "Borrow exceeds collateral");
 
-        markets[token].token.safeTransfer(msg.sender, amount);
-        emit Borrowed(msg.sender, token, amount);
+        markets[token].token.safeTransfer(recipient, amount);
+        emit Borrowed(borrower_, token, amount);
+        if (recipient != borrower_) {
+            emit BorrowedTo(borrower_, recipient, token, amount);
+        }
     }
 
     function repay(address token, uint256 amount) external nonReentrant whenNotPaused onlyActiveMarket(token) {

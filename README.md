@@ -13,6 +13,14 @@ Foundry consists of:
 
 https://book.getfoundry.sh/
 
+## Lending Tango Parana study guide
+
+La guia didactica del flujo LTP, agTICKET y mercado secundario WRA/SLT esta en:
+
+```text
+BITACORA-LTP-SLT.md
+```
+
 ## Usage
 
 ### Build

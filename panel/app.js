@@ -29,6 +29,11 @@ const ids = [
   "ticketAmount",
   "ticketTermMonths",
   "secondaryTicketFactor",
+  "sltCurrentDebt",
+  "sltRequestedAmount",
+  "sltApprovedAmount",
+  "sltFactorPercent",
+  "sltTermMonths",
   "conversionAsset",
   "marketDiscount",
   "truckCost",
@@ -132,21 +137,20 @@ function applyModelDefaults(model) {
     $("commodityName").value = "Trigo";
     $("ticketTokenSymbol").value = "wTK";
     $("tokenUnit").value = "tonelada";
-    $("wheatAmountLabel").textContent = "Trigo en garantia (toneladas / wTK)";
     $("borrowAmountLabel").textContent = "Prestamo solicitado (aUSD)";
     return;
   }
 
   if (model === "ticket") {
     $("lender").value = "Molinos Rio Parana";
-    $("borrower").value = "Asociacion Camioneros de Entre Rios";
-    $("collateralToken").value = "Garantia documental / flujo de fletes";
-    $("borrowToken").value = "Ticket wTK - credito en trigo tokenizado";
+    $("borrower").value = "Operador Logistico Portuario del Parana";
+    $("collateralToken").value = "Garantia documental / flujo logistico portuario";
+    $("borrowToken").value = "aUSD o wTK - segun necesidad operativa";
     $("wheatAmount").value = "3000000";
     $("borrowAmount").value = "10000";
     $("operationAmount").value = "6500";
     $("operationType").value = "borrow";
-    $("ticketWallet").value = "0xCamionerosEntreRios00000000000000000001";
+    $("ticketWallet").value = "0xLogisticaPortuaria00000000000000000001";
     $("ticketAmount").value = "10000";
     $("ticketKind").value = "primary";
     $("ticketTermMonths").value = "6";
@@ -157,8 +161,7 @@ function applyModelDefaults(model) {
     $("commodityName").value = "Trigo";
     $("ticketTokenSymbol").value = "wTK";
     $("tokenUnit").value = "tonelada";
-    $("wheatAmountLabel").textContent = "Garantia documentada estimada (USD)";
-    $("borrowAmountLabel").textContent = "wTK solicitados por ticket";
+    $("borrowAmountLabel").textContent = "Prestamo solicitado";
     return;
   }
 
@@ -176,12 +179,11 @@ function applyModelDefaults(model) {
   $("commodityName").value = "Trigo";
   $("ticketTokenSymbol").value = "wTK";
   $("tokenUnit").value = "tonelada";
-  $("wheatAmountLabel").textContent = "Garantia estable depositada (aUSD)";
-  $("borrowAmountLabel").textContent = "Prestamo solicitado (wTK / toneladas)";
+  $("borrowAmountLabel").textContent = "Prestamo solicitado";
 }
 
 function operationPreview(model, data) {
-  const amount = data.operationAmount;
+  const amount = model === "productivo" && data.operationType === "borrow" ? data.borrowAmount : data.operationAmount;
   const isProductive = model === "productivo";
   const isSecondaryBorrow = model === "ticket" && data.operationType === "borrow";
 
@@ -219,8 +221,8 @@ function operationPreview(model, data) {
       return {
         status: fits ? "Lista" : "Sobre limite",
         text: fits
-          ? `${data.borrower} podria solicitar un SLT por ${number.format(amount)} ${data.tokenSymbol}. El ticket primario base es de ${number.format(data.ticketAmount)} ${data.tokenSymbol} y el limite secundario aplicado es ${number.format(secondaryLimitTokens)} ${data.tokenSymbol} (${money.format(secondaryLimitValue)}).`
-          : `El SLT supera el limite secundario: pide ${number.format(amount)} ${data.tokenSymbol} (${money.format(requestedValue)}) contra ${number.format(secondaryLimitTokens)} ${data.tokenSymbol} (${money.format(secondaryLimitValue)}) habilitados. El ticket primario no deberia reutilizarse como si fuera garantia nueva limpia.`,
+          ? `${data.borrower} podria solicitar un SLT por ${number.format(amount)} ${data.tokenSymbol}. La base WRA secundaria declarada es ${number.format(data.ticketAmount)} ${data.tokenSymbol} y el limite aplicado es ${number.format(secondaryLimitTokens)} ${data.tokenSymbol} (${money.format(secondaryLimitValue)}).`
+          : `El SLT supera el limite secundario: pide ${number.format(amount)} ${data.tokenSymbol} (${money.format(requestedValue)}) contra ${number.format(secondaryLimitTokens)} ${data.tokenSymbol} (${money.format(secondaryLimitValue)}) habilitados. La base WRA ya arrastra riesgo financiero y no deberia aceptarse al 100%.`,
       };
     }
 
@@ -284,6 +286,7 @@ function render() {
   const marketDiscount = val("marketDiscount");
   const truckCost = val("truckCost");
   const secondaryMarket = $("secondaryMarket").value.trim() || "Mercado secundario tokenizado";
+  const sltApprovedAmount = val("sltApprovedAmount");
 
   if (String(liquidationBonus) !== $("liquidationBonus").value && document.activeElement !== $("liquidationBonus")) {
     $("liquidationBonus").value = liquidationBonus;
@@ -296,10 +299,14 @@ function render() {
   const interest = borrowAmount * (borrowRate / 100) * (termMonths / 12);
   const finalDebt = borrowAmount + interest;
   const finalDebtValue = isProductive ? finalDebt : finalDebt * currentTokenPrice;
+  const sltDebtValue = isProductive ? sltApprovedAmount : sltApprovedAmount;
+  const totalDebtWithSltValue = finalDebtValue + sltDebtValue;
+  const hfWithSlt = healthFactor(collateralValue, liquidationThreshold, totalDebtWithSltValue);
   const finalDebtWTK = isProductive ? 0 : finalDebt;
   const protocolReserve = interest * (reserveFactor / 100);
   const lenderYield = interest - protocolReserve;
   const data = {
+    model,
     lender,
     borrower,
     wheatAmount,
@@ -328,6 +335,10 @@ function render() {
     ticketAmount,
     ticketTermMonths,
     secondaryTicketFactor,
+    sltApprovedAmount,
+    sltDebtValue,
+    totalDebtWithSltValue,
+    hfWithSlt,
     conversionAsset,
     marketDiscount,
     truckCost,
@@ -355,20 +366,38 @@ function render() {
     ? money.format(finalDebt)
     : `${number.format(finalDebt)} ${tokenSymbol} (${money.format(finalDebtValue)})`;
   $("healthFactor").textContent = Number.isFinite(hfNow) ? number.format(hfNow) : "Sin deuda";
+  $("primaryDebtView").textContent = money.format(finalDebtValue);
+  $("sltDebtView").textContent = money.format(sltDebtValue);
+  $("totalDebtWithSltView").textContent = money.format(totalDebtWithSltValue);
+  $("totalDebtWithSltDetail").textContent =
+    `HF post-SLT: ${Number.isFinite(hfWithSlt) ? number.format(hfWithSlt) : "Sin deuda"}. Esta lectura suma LTP primario + SLT.`;
   $("totalInterest").textContent = isProductive ? money.format(interest) : `${number.format(interest)} ${tokenSymbol}`;
   $("lenderYield").textContent = isProductive ? money.format(lenderYield) : `${number.format(lenderYield)} ${tokenSymbol}`;
   $("protocolReserve").textContent = isProductive
     ? money.format(protocolReserve)
     : `${number.format(protocolReserve)} ${tokenSymbol}`;
   $("currentPriceLabel").textContent = `Precio ${commodityName.toLowerCase()} actual (USD/${referenceUnit})`;
+  $("decemberPriceLabel").textContent = `Precio ${commodityName.toLowerCase()} esperado a diciembre`;
+  $("marchPriceLabel").textContent = `Precio ${commodityName.toLowerCase()} esperado a marzo`;
+  $("wheatAmountLabel").textContent =
+    model === "ticket"
+      ? "Garantia documentada estimada (USD)"
+      : isProductive
+        ? `${commodityName} en garantia (${tokenUnit} / ${tokenSymbol})`
+        : "Garantia estable depositada (aUSD)";
+  $("borrowAmountLabel").textContent = isProductive
+    ? "Prestamo solicitado (aUSD)"
+    : `Prestamo solicitado (${tokenSymbol} / ${tokenUnit})`;
   $("ticketAmountLabel").textContent =
-    ticketKind === "secondary" ? `${tokenSymbol} del ticket primario base` : `${tokenSymbol} otorgados LTP`;
+    ticketKind === "secondary"
+      ? `${tokenSymbol} WRA base en mercado secundario`
+      : `Cantidad documentada del activo (${tokenSymbol})`;
   $("tokenPriceLabel").textContent = `Precio 1 ${tokenSymbol}`;
   $("wTKPrice").textContent = `${money.format(currentTokenPrice)} / ${tokenUnit}`;
   $("tokenPriceDetail").textContent =
     `1 ${tokenSymbol} = 1 ${tokenUnit}; precio manual ${money.format(currentPrice)} / ${referenceUnit}; factor de conversion ${number.format(unitsPerToken)} ${referenceUnit} por token.`;
   $("priceHeader").textContent = `Precio ${commodityName.toLowerCase()}`;
-  $("ticketTokenLabel").textContent = `${tokenSymbol} otorgados`;
+  $("ticketTokenLabel").textContent = `Activo documentado (${tokenSymbol})`;
 
   const status = labelForHealth(hfNow);
   $("estadoPrestamo").textContent = status;
@@ -464,7 +493,7 @@ function shortWallet(wallet) {
 
 function ticketIdFor(data) {
   const prefix = data.ticketKind === "secondary" ? "SLT" : "LTP";
-  const emittedAmount = data.ticketKind === "secondary" ? data.operationAmount : data.ticketAmount;
+  const emittedAmount = ticketDocumentedAmount(data);
   const base = `${prefix}-${data.borrower}-${emittedAmount}-${data.ticketTermMonths}-${data.ticketWallet}`;
   let hash = 0;
 
@@ -475,14 +504,24 @@ function ticketIdFor(data) {
   return `${prefix}-${String(hash).padStart(5, "0")}`;
 }
 
+function ticketDocumentedAmount(data) {
+  if (data.ticketKind === "secondary") return data.operationAmount;
+  if (data.model === "productivo") return data.wheatAmount;
+  return data.ticketAmount;
+}
+
 function renderTicket(data) {
   const discount = clamp(data.marketDiscount, 0, 30);
-  const emittedAmount = data.ticketKind === "secondary" ? data.operationAmount : data.ticketAmount;
+  const emittedAmount = ticketDocumentedAmount(data);
   const ticketNotional = emittedAmount * data.currentTokenPrice;
   const stableValue = ticketNotional * (1 - discount / 100);
   const truckUnits = data.truckCost > 0 ? stableValue / data.truckCost : 0;
   const ticketId = ticketIdFor(data);
   const ticketKindLabel = data.ticketKind === "secondary" ? "ticket secundario SLT" : "ticket primario LTP";
+  const truckText =
+    data.truckCost > 0
+      ? ` A modo de ejemplo, eso equivale a ${number.format(truckUnits)} unidad(es) logisticas de ${money.format(data.truckCost)} cada una.`
+      : "";
 
   $("ticketId").textContent = ticketId;
   $("ticketTerm").textContent = `Plazo ${number.format(data.ticketTermMonths)} meses`;
@@ -491,13 +530,13 @@ function renderTicket(data) {
   $("ticketNotional").textContent = money.format(ticketNotional);
   $("ticketStable").textContent = `${money.format(stableValue)} en ${data.conversionAsset}`;
   $("ticketText").textContent =
-    `${data.lender} otorga a ${data.borrower} un ${ticketKindLabel} por ${number.format(emittedAmount)} ${data.tokenSymbol} ` +
+    `${data.lender} emite para ${data.borrower} un ${ticketKindLabel} que documenta ${number.format(emittedAmount)} ${data.tokenSymbol} ` +
     `en la cartera ${shortWallet(data.ticketWallet)}. Con el precio oracle actual, el valor nocional es ${money.format(ticketNotional)}. ` +
     `Si ese ticket se negocia en ${data.secondaryMarket} con un descuento del ${number.format(discount)}%, ` +
-    `la salida estimada seria ${money.format(stableValue)} en ${data.conversionAsset}. ` +
-    `A modo de ejemplo, eso equivale a ${number.format(truckUnits)} camion(es) de ${money.format(data.truckCost)} cada uno.` +
+    `la salida estimada seria ${money.format(stableValue)} en ${data.conversionAsset}.` +
+    truckText +
     (data.ticketKind === "secondary"
-      ? ` Este SLT nace sobre un LTP base de ${number.format(data.ticketAmount)} ${data.tokenSymbol} y no deberia usarse como si fuera un LTP primario sin una nueva auditoria.`
+      ? ` Este SLT pertenece al mercado secundario WRA: no reutiliza el agTICKET bloqueado del LTP, sino que aplica haircut sobre tokens ${data.tokenSymbol} que ya arrastran riesgo financiero.`
       : "");
 }
 

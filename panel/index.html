@@ -13,16 +13,141 @@
           <p class="eyebrow">Caso de estudio agrofinanciero</p>
           <h1>Lending Tango Parana</h1>
           <p class="summary">
-            Simulador simple de credito colateralizado con trigo tokenizado. La cooperativa deja wTK
-            como garantia, Molinos aporta liquidez estable y el protocolo calcula deuda, riesgo,
-            intereses, reserva y posible liquidacion.
+            Simulador de credito colateralizado sobre activos reales agroindustriales. Modela tickets
+            WRA, custodia en vault, recibos agTICKET, liquidez estable aUSD, riesgo, intereses,
+            auditoria y trazabilidad on-chain.
           </p>
+          <button class="guide-open" id="openGuide" type="button">Guia de uso</button>
         </div>
         <div class="status-box">
           <span class="status-label">Estado del prestamo</span>
           <strong id="estadoPrestamo">Saludable</strong>
           <small id="estadoDetalle">La posicion mantiene margen suficiente.</small>
         </div>
+      </section>
+
+      <section class="guide-modal" id="guideModal" aria-hidden="true">
+        <div class="guide-backdrop" data-guide-close></div>
+        <article class="guide-dialog" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
+          <div class="guide-head">
+            <div>
+              <p class="eyebrow">Carta de uso</p>
+              <h2 id="guideTitle">Mapa de Lending Tango Parana</h2>
+              <p>
+                Caso de estudio para explicar credito colateralizado, activos agroindustriales tokenizados
+                y trazabilidad financiera sobre blockchain.
+              </p>
+            </div>
+            <button class="guide-close" type="button" data-guide-close>Cerrar</button>
+          </div>
+
+          <div class="river-strip">
+            <strong>Corredor Parana LATAM</strong>
+            <span>Argentina 🇦🇷 · Paraguay 🇵🇾 · Brasil 🇧🇷</span>
+          </div>
+
+          <div class="guide-tabs" aria-label="Secciones de guia">
+            <button class="active" type="button" data-guide-tab="resumen">Resumen</button>
+            <button type="button" data-guide-tab="actores">Actores</button>
+            <button type="button" data-guide-tab="ltp">LTP</button>
+            <button type="button" data-guide-tab="slt">SLT</button>
+            <button type="button" data-guide-tab="riesgo">Riesgo</button>
+            <button type="button" data-guide-tab="testnet">Testnet</button>
+          </div>
+
+          <div class="guide-content active" data-guide-panel="resumen">
+            <h3>Que modela</h3>
+            <p>
+              Lending Tango Parana muestra como un activo real puede documentarse, tokenizarse y usarse
+              como base de credito. No es un producto financiero final: es una maqueta auditable para
+              que alumnos, cooperativas, lenders, auditores y perfiles financieros entiendan la logica.
+            </p>
+            <div class="guide-grid">
+              <div>
+                <strong>Financiamiento productivo</strong>
+                <p>El tomador deja activo agro / agTICKET como respaldo y recibe liquidez estable.</p>
+              </div>
+              <div>
+                <strong>Exposicion a trigo tokenizado</strong>
+                <p>El tomador deja garantia estable y recibe wTK para quedar expuesto al precio del trigo.</p>
+              </div>
+              <div>
+                <strong>Logistica portuaria</strong>
+                <p>Financia transporte, puerto, seguros, combustible o fletes. Puede pedir aUSD o wTK.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="guide-content" data-guide-panel="actores">
+            <h3>Actores</h3>
+            <ul>
+              <li><strong>Administrador / multisig:</strong> crea LTP, emite tickets, fondea liquidez y aprueba SLT.</li>
+              <li><strong>Borrower:</strong> recibe el LTP, deposita colateral, toma deuda y firma la ejecucion final.</li>
+              <li><strong>Wallet 3:</strong> recibe liquidez por una cesion de margen SLT, sin controlar el LTP original.</li>
+              <li><strong>Auditor:</strong> revisa hashes, estados, contratos, direcciones y eventos on-chain.</li>
+              <li><strong>Liquidador:</strong> actua cuando una posicion cae debajo del umbral de seguridad.</li>
+            </ul>
+          </div>
+
+          <div class="guide-content" data-guide-panel="ltp">
+            <h3>Flujo LTP</h3>
+            <ol>
+              <li>El administrador crea un ticket primario LTP con datos de actor, activo, monto, plazo y documento.</li>
+              <li>El LTP se emite a la wallet del borrower.</li>
+              <li>El borrower bloquea el LTP en el vault.</li>
+              <li>El vault custodia el ERC1155 y emite 1 agTICKET como recibo ERC20.</li>
+              <li>El borrower deposita agTICKET como colateral en LendingProtocol.</li>
+              <li>El borrower pide el token prestado: aUSD, wTK, sTK, gTK u otro mercado configurado.</li>
+            </ol>
+            <p class="guide-note">
+              En logistica portuaria, el LTP no tiene que representar grano fisico directo. Puede documentar
+              una operacion auditada de transporte, puerto, acopio, seguros, combustible, mantenimiento o fletes.
+              Si pide aUSD, busca liquidez estable. Si pide wTK, asume deuda vinculada al precio del trigo tokenizado.
+            </p>
+          </div>
+
+          <div class="guide-content" data-guide-panel="slt">
+            <h3>Flujo SLT</h3>
+            <p>
+              El SLT no crea credito sin respaldo. Usa margen libre de un LTP ya auditado.
+            </p>
+            <ol>
+              <li>Ejemplo: LTP vale 100, permite 65, el borrower ya uso 50 y quedan 15 libres.</li>
+              <li>El borrower solicita un SLT para ceder parte de ese margen a una wallet 3.</li>
+              <li>El administrador aprueba el SLT luego de revisar documento y riesgo.</li>
+              <li>El borrower ejecuta el desembolso con su firma.</li>
+              <li>La wallet 3 recibe el token prestado, pero la deuda sigue atada al borrower/LTP.</li>
+            </ol>
+          </div>
+
+          <div class="guide-content" data-guide-panel="riesgo">
+            <h3>Riesgo visible</h3>
+            <ul>
+              <li><strong>Factor colateral:</strong> define cuanto se puede pedir contra una garantia.</li>
+              <li><strong>Umbral de liquidacion:</strong> define cuando una posicion puede ser liquidada.</li>
+              <li><strong>Oracle:</strong> alimenta el precio, pero no reemplaza auditoria ni gobierno de riesgo.</li>
+              <li><strong>SLT:</strong> aumenta deuda total del LTP, por eso debe verse separado y sumado.</li>
+              <li><strong>Bad debt:</strong> si el colateral cae demasiado rapido, el protocolo debe mostrar la perdida.</li>
+            </ul>
+          </div>
+
+          <div class="guide-content" data-guide-panel="testnet">
+            <h3>Como probar</h3>
+            <ol>
+              <li>Conectar wallet administrador y crear/emitar LTP.</li>
+              <li>Conectar wallet borrower y bloquear LTP en vault.</li>
+              <li>Depositar agTICKET como colateral.</li>
+              <li>Fondear liquidez del token prestado desde el administrador.</li>
+              <li>Pedir el token prestado desde el borrower.</li>
+              <li>Para SLT: solicitar con borrower, aprobar con administrador y ejecutar con borrower.</li>
+            </ol>
+            <p class="guide-note">
+              Cada usuario prueba con su propia wallet. El panel no guarda claves privadas y solo firma
+              transacciones desde MetaMask o una wallet compatible. Para ver saldos, importa aUSD, wTK,
+              sTK, gTK y agTICKET desde la tarjeta "Contratos para importar en wallet".
+            </p>
+          </div>
+        </article>
       </section>
 
       <section class="grid">
@@ -44,7 +169,7 @@
             </label>
             <label>
               <input type="radio" name="modelType" value="ticket" />
-              Ticket camionero
+              Logistica portuaria
             </label>
           </div>
 
@@ -71,22 +196,22 @@
 
           <div class="two-cols">
             <label>
-              <span id="wheatAmountLabel">Trigo en garantia (toneladas / wTK)</span>
+              <span id="wheatAmountLabel">Activo en garantia</span>
               <input id="wheatAmount" type="number" min="0" step="100" value="10000" />
             </label>
             <label>
-              <span id="currentPriceLabel">Precio trigo actual (USD/tonelada)</span>
+              <span id="currentPriceLabel">Precio actual (USD/tonelada)</span>
               <input id="currentPrice" type="number" min="0" step="0.01" value="216.82" />
             </label>
           </div>
 
           <div class="two-cols">
             <label>
-              Precio esperado a diciembre
+              <span id="decemberPriceLabel">Precio esperado a diciembre</span>
               <input id="decemberPrice" type="number" min="0" step="0.01" value="224.87" />
             </label>
             <label>
-              Precio esperado a marzo
+              <span id="marchPriceLabel">Precio esperado a marzo</span>
               <input id="marchPrice" type="number" min="0" step="0.01" value="232.25" />
             </label>
           </div>
@@ -184,23 +309,23 @@
           </div>
 
           <div class="section-title compact">
-            <h2>Operacion secundaria</h2>
-            <p>Vista previa de un represtamo o accion nueva. No modifica el ticket primario.</p>
+            <h2>Mercado secundario WRA</h2>
+            <p>Vista previa de un SLT sobre tokens WRA comprados o transferidos. No reutiliza el agTICKET bloqueado del LTP.</p>
           </div>
 
           <div class="two-cols">
             <label>
-              Accion secundaria
+              Accion mercado secundario
               <select id="operationType">
                 <option value="supply">Molinos aporta liquidez</option>
                 <option value="deposit">AFRA deposita garantia</option>
-                <option value="borrow" selected>Solicitar represtamo SLT</option>
+                <option value="borrow" selected>Solicitar credito SLT</option>
                 <option value="repay">AFRA paga deuda</option>
                 <option value="liquidate">Liquidador ejecuta riesgo</option>
               </select>
             </label>
             <label>
-              Monto solicitado en represtamo
+              Monto solicitado en SLT
               <input id="operationAmount" type="number" min="0" step="100" value="40000" />
             </label>
           </div>
@@ -208,8 +333,8 @@
           <div class="admin-note">
             <strong>LTP vs SLT</strong>
             <p>
-              LTP es el ticket primario emitido sobre la operacion original. SLT es un ticket secundario
-              de represtamo: se calcula sobre un ticket anterior y aplica un limite didactico del 65%.
+              LTP es el ticket primario de la operacion original. SLT es un ticket de mercado secundario
+              sobre tokens WRA que ya arrastran riesgo financiero. Por eso aplica un limite didactico del 65%.
             </p>
           </div>
 
@@ -232,7 +357,7 @@
               </select>
             </label>
             <label>
-              <span id="ticketAmountLabel">wTK otorgados</span>
+              <span id="ticketAmountLabel">Cantidad documentada del activo</span>
               <input id="ticketAmount" type="number" min="0" step="100" value="10000" />
             </label>
           </div>
@@ -243,7 +368,7 @@
               <input id="ticketTermMonths" type="number" min="1" step="1" value="6" />
             </label>
             <label>
-              Limite SLT sobre ticket anterior (%)
+              Limite SLT sobre WRA base (%)
               <input id="secondaryTicketFactor" type="number" min="0" max="65" step="1" value="65" />
             </label>
           </div>
@@ -258,7 +383,7 @@
               <input id="marketDiscount" type="number" min="0" max="30" step="0.5" value="2" />
             </label>
             <label>
-              Valor camion ejemplo
+              Valor unidad logistica ejemplo
               <input id="truckCost" type="number" min="0" step="1000" value="85000" />
             </label>
           </div>
@@ -269,60 +394,95 @@
           </label>
 
           <div class="section-title compact">
-            <h2>Admin testnet</h2>
-            <p>Con wallet conectada, estos botones ejecutan el flujo real sobre contratos deployados.</p>
+            <h2>Tableros testnet</h2>
+            <p>Cada actor ve su parte del flujo. Admin emite y fondea; tomador acepta, bloquea y pide; auditor revisa estados y puede activar el fusible.</p>
           </div>
 
           <div class="admin-note">
             <strong>Modo prueba real</strong>
             <p>
-              Pega las direcciones impresas por el deploy. El administrador firma cada paso desde la wallet.
-              El panel no guarda claves privadas.
+              Las direcciones estan precargadas con el ultimo deploy en Arbitrum Sepolia. El panel no guarda
+              claves privadas: cada boton debe firmarse desde la wallet del rol correspondiente.
             </p>
           </div>
 
           <div class="two-cols">
             <label>
               AgroTicket1155
-              <input id="ticketContractAddress" type="text" value="0xC63fDCE9feAd8B71E7D8E72A0bD90d9B3BC2b8ad" />
+              <input id="ticketContractAddress" type="text" value="0xE314aEa3F70bBDcFC88Bf4583918c901FfB7843f" />
             </label>
             <label>
               AgroTicketReceiptVault
-              <input id="vaultContractAddress" type="text" value="0x2D0B31405d7E6151E2a55b0318BDb1c3FD68B4a1" />
+              <input id="vaultContractAddress" type="text" value="0xD0206AD641c11aA8B78F2F43cBaA715805B33771" />
             </label>
           </div>
 
           <div class="two-cols">
             <label>
               LendingProtocol
-              <input id="lendingContractAddress" type="text" value="0xd56FDA75E70F2C15376ec48f612C4405fF64b796" />
+              <input id="lendingContractAddress" type="text" value="0x3cf3d0F298be59197C7aD2232195e7901D91fb71" />
             </label>
             <label>
-              Activo ERC20 respaldado
-              <input id="assetContractAddress" type="text" value="0xDDB5C2Aa89Ad4E4dF668dC42c242618C0456650b" />
+              SLT - subcredito LTP
+              <input id="sltContractAddress" type="text" value="0x02E1B5435C741b0ccC3eB1EeA1410992aab18213" />
             </label>
           </div>
 
           <div class="two-cols">
             <label>
-              Token prestado aUSD
-              <input id="borrowTokenAddress" type="text" value="0x34155Bd9688756fDDcCccc0A01fa993661A840CC" />
+              Token colateral
+              <input id="assetContractAddress" type="text" value="0x31f4A5350EB2749fAaeA472D24C015629E56d1c3" />
             </label>
             <label>
-              Liquidez aUSD para fondear
+              Token prestado
+              <input id="borrowTokenAddress" type="text" value="0xF4a1270f44090Eb765073062868EF4d6EFC7A3cE" />
+            </label>
+          </div>
+
+          <div class="import-box">
+            <div>
+              <strong>Contratos para importar en wallet</strong>
+              <p>Tokens ERC20 del deploy actual en Arbitrum Sepolia. Agregalos en MetaMask para ver saldos sin crear tokens nuevos.</p>
+            </div>
+            <div class="import-grid">
+              <button type="button" data-copy-address="0xF4a1270f44090Eb765073062868EF4d6EFC7A3cE">
+                <span>aUSD</span>
+                <small>0xF4a1...A3cE</small>
+              </button>
+              <button type="button" data-copy-address="0x31f4A5350EB2749fAaeA472D24C015629E56d1c3">
+                <span>wTK</span>
+                <small>0x31f4...d1c3</small>
+              </button>
+              <button type="button" data-copy-address="0x4cb50c65c0FE4F2d8d0dD02dB72E785e2D3190DA">
+                <span>sTK</span>
+                <small>0x4cb5...90DA</small>
+              </button>
+              <button type="button" data-copy-address="0x3E9de44616922379b47505b83EB784c34188d995">
+                <span>gTK</span>
+                <small>0x3E9d...995</small>
+              </button>
+              <button type="button" data-copy-address="0xD0206AD641c11aA8B78F2F43cBaA715805B33771">
+                <span>agTICKET</span>
+                <small>0xD020...3771</small>
+              </button>
+            </div>
+            <p class="copy-status" id="copyStatus">Click en un token para copiar su contrato.</p>
+          </div>
+
+          <div class="two-cols">
+            <label>
+              Liquidez del token prestado para fondear
               <input id="liquidityAmount" type="number" min="0" step="1000" value="2000000" />
             </label>
-          </div>
-
-          <div class="two-cols">
             <label>
-              Monto aUSD a pedir
+              Monto del token prestado a pedir
               <input id="borrowAUsdAmount" type="number" min="0" step="1000" value="1000000" />
             </label>
-            <div class="admin-note inline-note">
-              <strong>Roles</strong>
-              <p>Fondear liquidez lo firma Molinos/admin. Pedir aUSD lo firma la wallet que deposito agTICKET.</p>
-            </div>
+          </div>
+
+          <div class="admin-note inline-note">
+            <strong>Roles</strong>
+            <p>Fondear liquidez lo firma el administrador. Pedir el token prestado o ejecutar SLT lo firma la wallet borrower que responde por el LTP.</p>
           </div>
 
           <label>
@@ -330,24 +490,166 @@
             <input id="manualTicketId" type="number" min="0" step="1" placeholder="Solo si ya fue creado on-chain" />
           </label>
 
+          <div class="section-title compact">
+            <h2>SLT sobre margen libre del LTP</h2>
+            <p>Ejemplo: LTP vale 100, permite 65, el borrower ya uso 50 y puede ceder hasta 15 a wallet 3.</p>
+          </div>
+
+          <div class="two-cols">
+            <label>
+              LTP base para SLT
+              <input id="sltLtpTicketId" type="number" min="0" step="1" placeholder="Ej: 3" />
+            </label>
+            <label>
+              SLT ID existente
+              <input id="manualSltId" type="number" min="0" step="1" placeholder="Se completa al solicitar" />
+            </label>
+          </div>
+
+          <label>
+            Wallet 3 que recibe aUSD
+            <input id="sltRecipientWallet" type="text" placeholder="0x... proveedor, transportista o tercero auditado" />
+          </label>
+
+          <div class="two-cols">
+            <label>
+              Deuda actual del LTP en aUSD
+              <input id="sltCurrentDebt" type="number" min="0" step="1000" value="50000" />
+            </label>
+            <label>
+              Monto solicitado SLT en aUSD
+              <input id="sltRequestedAmount" type="number" min="0" step="1000" value="15000" />
+            </label>
+          </div>
+
+          <div class="two-cols">
+            <label>
+              Monto aprobado SLT en aUSD
+              <input id="sltApprovedAmount" type="number" min="0" step="1000" value="15000" />
+            </label>
+            <label>
+              Factor SLT sobre margen libre (%)
+              <input id="sltFactorPercent" type="number" min="0" max="100" step="1" value="100" />
+            </label>
+          </div>
+
+          <div class="two-cols">
+            <label>
+              Plazo SLT en meses
+              <input id="sltTermMonths" type="number" min="1" step="1" value="3" />
+            </label>
+            <label>
+              Documento / referencia SLT
+              <input id="sltDocumentReference" type="text" value="contrato-slt-subcredito-v1" />
+            </label>
+          </div>
+
           <label>
             Documento / referencia legal para hash
             <input id="documentReference" type="text" value="contrato-ticket-tokenizado-v1" />
           </label>
 
-          <div class="admin-actions">
-            <button id="connectWallet" type="button">Conectar wallet</button>
-            <button id="createTicketOnchain" type="button">Crear ticket</button>
-            <button id="issueTicketOnchain" type="button">Emitir ticket</button>
-            <button id="lockTicketOnchain" type="button">Bloquear en vault</button>
-            <button id="depositReceiptOnchain" type="button">Usar en lending</button>
-            <button id="fundAUsdLiquidityOnchain" type="button">Fondear aUSD</button>
-            <button id="borrowAUsdOnchain" type="button">Pedir aUSD</button>
+          <label>
+            Wallet destino para transferir LTP
+            <input id="ticketTransferTo" type="text" placeholder="0x... comprador o nueva wallet" />
+          </label>
+
+          <div class="role-tabs" aria-label="Tableros por rol">
+            <button class="role-tab active" type="button" data-role-tab="admin">Administrador</button>
+            <button class="role-tab" type="button" data-role-tab="borrower">Tomador</button>
+            <button class="role-tab" type="button" data-role-tab="auditor">Auditor</button>
+          </div>
+
+          <div class="role-panel active" data-role-panel="admin">
+            <div class="role-head">
+              <strong>Administrador</strong>
+              <p>Carga la operacion, emite el LTP y aporta liquidez del token prestado. Firma con la wallet administradora.</p>
+            </div>
+            <div class="admin-actions">
+              <button id="connectWalletAdmin" type="button">Conectar administrador</button>
+              <button id="createTicketOnchain" type="button">Crear ticket LTP</button>
+              <button id="issueTicketOnchain" type="button">Emitir ticket</button>
+              <button id="fundAUsdLiquidityOnchain" type="button">Fondear token prestado</button>
+              <button id="approveSltOnchain" type="button">Aprobar SLT</button>
+            </div>
+          </div>
+
+          <div class="role-panel" data-role-panel="borrower">
+            <div class="role-head">
+              <strong>Tomador / Cooperativa</strong>
+              <p>Recibe el LTP, lo bloquea en vault, deposita agTICKET como colateral y pide el token prestado. Firma con su propia wallet.</p>
+            </div>
+            <div class="admin-actions">
+              <button id="connectWalletBorrower" type="button">Conectar tomador</button>
+              <button id="transferTicketOnchain" type="button">Transferir LTP</button>
+              <button id="lockTicketOnchain" type="button">Bloquear LTP</button>
+              <button id="depositReceiptOnchain" type="button">Depositar agTICKET</button>
+              <button id="borrowAUsdOnchain" type="button">Pedir token prestado</button>
+              <button id="requestSltOnchain" type="button">Solicitar SLT</button>
+              <button id="executeSltOnchain" type="button">Ejecutar SLT a wallet 3</button>
+            </div>
+          </div>
+
+          <div class="role-panel" data-role-panel="auditor">
+            <div class="role-head">
+              <strong>Auditor / Control</strong>
+              <p>Lee la linea de vida, copia hashes para Arbiscan y puede frenar el lending si detecta un problema.</p>
+            </div>
+            <div class="admin-actions">
+              <button id="connectWalletAuditor" type="button">Conectar auditor</button>
+              <button id="pauseProtocolOnchain" type="button">Pausar lending</button>
+              <button id="unpauseProtocolOnchain" type="button">Reactivar lending</button>
+            </div>
           </div>
 
           <div class="flow-box">
             <strong>Estado testnet</strong>
             <p id="testnetStatus">Sin wallet conectada.</p>
+          </div>
+
+          <div class="flow-box lifecycle-box">
+            <strong>Linea de vida on-chain</strong>
+            <p>
+              Estados de la operatoria actual. Los hashes quedan visibles para probarlos en Arbiscan.
+            </p>
+            <ol class="lifecycle-list" id="lifecycleList">
+              <li data-step="create">
+                <span>1. Ticket LTP creado</span>
+                <small>Admin firma createTicket. Pendiente.</small>
+              </li>
+              <li data-step="issue">
+                <span>2. Ticket emitido</span>
+                <small>Admin envia el ERC1155 a la wallet receptora. Pendiente.</small>
+              </li>
+              <li data-step="lock">
+                <span>3. Ticket transferido o bloqueado</span>
+                <small>Tomador aprueba el vault y bloquea el LTP. Pendiente.</small>
+              </li>
+              <li data-step="deposit">
+                <span>4. agTICKET usado como colateral</span>
+                <small>Tomador aprueba agTICKET y llama depositCollateral. Pendiente.</small>
+              </li>
+              <li data-step="fund">
+                <span>5. Liquidez disponible</span>
+                <small>El administrador puede fondear el token prestado, o el prestamo puede usar liquidez ya disponible. Pendiente.</small>
+              </li>
+              <li data-step="borrow">
+                <span>6. Prestamo recibido</span>
+                <small>Tomador llama borrow y recibe el token prestado. Pendiente.</small>
+              </li>
+              <li data-step="sltRequest">
+                <span>7. SLT solicitado</span>
+                <small>Borrower primario solicita ceder margen libre del LTP a wallet 3. Pendiente.</small>
+              </li>
+              <li data-step="sltApprove">
+                <span>8. SLT aprobado</span>
+                <small>Admin/multisig aprueba el subcredito. Pendiente.</small>
+              </li>
+              <li data-step="sltExecute">
+                <span>9. SLT ejecutado a wallet 3</span>
+                <small>Borrower firma borrowTo y marca SLT como fondeado. Pendiente.</small>
+              </li>
+            </ol>
           </div>
         </form>
 
@@ -373,6 +675,24 @@
             <div>
               <span>Health factor actual</span>
               <strong id="healthFactor">0.00</strong>
+            </div>
+          </div>
+
+          <div class="oracle-grid">
+            <div>
+              <span>Deuda primaria estimada</span>
+              <strong id="primaryDebtView">$0</strong>
+              <small>Prestamo LTP mas interes estimado.</small>
+            </div>
+            <div>
+              <span>SLT aprobado / ejecutado</span>
+              <strong id="sltDebtView">$0</strong>
+              <small>Monto enviado o a enviar a wallet 3.</small>
+            </div>
+            <div>
+              <span>Deuda total post-SLT</span>
+              <strong id="totalDebtWithSltView">$0</strong>
+              <small id="totalDebtWithSltDetail">Incluye LTP primario + SLT.</small>
             </div>
           </div>
 
@@ -453,7 +773,7 @@
                 <strong id="ticketReceiver">Asociacion Camioneros</strong>
               </div>
               <div>
-                <span id="ticketTokenLabel">wTK otorgados</span>
+                <span id="ticketTokenLabel">Activo documentado</span>
                 <strong id="ticketWtk">0 wTK</strong>
               </div>
               <div>

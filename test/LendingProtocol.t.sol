@@ -11,6 +11,7 @@ contract LendingProtocolTest is Test {
 
     address private lender = address(0xA11CE);
     address private borrower = address(0xB0B);
+    address private thirdWallet = address(0xF00D);
     address private liquidator = address(0xCAFE);
     address private molinosRioParana = address(0xBEEF);
     address private cooperativaAFRA = address(0xAFa);
@@ -52,6 +53,24 @@ contract LendingProtocolTest is Test {
 
         assertEq(usdToken.balanceOf(borrower), 1_000 * WAD);
         assertEq(protocol.getBorrowLimitUsd(borrower), 1_500 * WAD);
+        assertTrue(protocol.isHealthy(borrower));
+    }
+
+    function testBorrowerCanRouteBorrowedFundsToThirdWallet() public {
+        vm.startPrank(lender);
+        usdToken.approve(address(protocol), 10_000 * WAD);
+        protocol.supplyLiquidity(address(usdToken), 10_000 * WAD);
+        vm.stopPrank();
+
+        vm.startPrank(borrower);
+        ethToken.approve(address(protocol), 1 * WAD);
+        protocol.depositCollateral(address(ethToken), 1 * WAD);
+        protocol.borrowTo(address(usdToken), 1_000 * WAD, thirdWallet);
+        vm.stopPrank();
+
+        assertEq(usdToken.balanceOf(borrower), 0);
+        assertEq(usdToken.balanceOf(thirdWallet), 1_000 * WAD);
+        assertEq(protocol.getDebtValueUsd(borrower), 1_000 * WAD);
         assertTrue(protocol.isHealthy(borrower));
     }
 
